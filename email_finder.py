@@ -16,7 +16,7 @@ TITLE = """
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 """
 
-query = "QUERY TO SEARCH"
+query = "Madrid AND restaurante AND email"
 
 print(TITLE)
 
@@ -31,7 +31,7 @@ for i in search(query,  # The query you want to run
                 pause=2.0,  # Lapse between HTTP requests
                 ):
     my_webs_page_result_list.append(i)
-    print(i)
+print("[!] DONE")
 
 print("[!] Getting the web emails")
 emails_set = set()
@@ -57,7 +57,9 @@ for web_page in my_webs_page_result_list:
                     i.string = i.string.replace("\t", "").replace("\n", "").replace(" ","")
                     email = i.string
                     emails_set.add((web_page, title, email))
-
     except:
         pass
-print(emails_set)
+print("[!] DONE")
+
+for email in emails_set:
+    print(email)
