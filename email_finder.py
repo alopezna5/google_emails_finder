@@ -27,23 +27,37 @@ for i in search(query,  # The query you want to run
                 lang='en',  # The language
                 num=10,  # Number of results per page
                 start=0,  # First result to retrieve
-                stop=100,  # Last result to retrieve
+                stop=40,  # Last result to retrieve
                 pause=2.0,  # Lapse between HTTP requests
                 ):
     my_webs_page_result_list.append(i)
     print(i)
 
 print("[!] Getting the web emails")
+emails_set = set()
+
 for web_page in my_webs_page_result_list:
     try:
+        # Html finder
         r = requests.get(web_page)
         data = r.text
         soup = BeautifulSoup(data, "html.parser")
 
-        for i in soup.find_all(href=re.compile("mailto")):
-            if i.string != None:
-                i.string = i.string.replace("\t", "").replace("\n", "").replace(" ","")
-                print(i.string)
+        # Title finder
+        try:
+            title = soup.title.text
+        except:
+            title = None
+
+        # Email finder
+        first_email_search_filter = soup.find_all(href=re.compile("mailto"))
+        if len(first_email_search_filter) > 1:
+            for i in first_email_search_filter:
+                if i.string != None and "@" in i.string:
+                    i.string = i.string.replace("\t", "").replace("\n", "").replace(" ","")
+                    email = i.string
+                    emails_set.add((web_page, title, email))
 
     except:
         pass
+print(emails_set)
