@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Google search
 from googlesearch import search
+
+# Requests, html and searches utils
 import re
 import requests
 from bs4 import BeautifulSoup
+
+# Database utils
+import sqlite3
+from sqlite3 import Error
 
 TITLE = """
   ______  __  __            _____  _        ______  _____  _   _  _____   ______  _____  
@@ -54,7 +61,7 @@ for web_page in my_webs_page_result_list:
         if len(first_email_search_filter) > 1:
             for i in first_email_search_filter:
                 if i.string != None and "@" in i.string:
-                    i.string = i.string.replace("\t", "").replace("\n", "").replace(" ","")
+                    i.string = i.string.replace("\t", "").replace("\n", "").replace(" ", "")
                     email = i.string
                     emails_set.add((web_page, title, email))
     except:
@@ -63,3 +70,26 @@ print("[!] DONE")
 
 for email in emails_set:
     print(email)
+
+# Create a database connection to a SQLite database and insert the elements
+print("[!] Inserting in DB")
+
+conn = None
+try:
+    conn = sqlite3.connect("emails_database.db")  # Create db connection
+    cur = conn.cursor()
+
+    cur.execute(" CREATE TABLE IF NOT EXISTS emails(id integer, web text, title text, email text)")  # Create emails table
+    conn.commit()
+
+    i = 1
+    for email in emails_set:
+        cur.execute("INSERT INTO emails VALUES(?, ?, ?, ?)", (i, email[0], email[1], email[2]))
+        conn.commit()
+        i += 1
+
+except Error as e:
+    print(e)
+finally:
+    if conn:
+        conn.close()
