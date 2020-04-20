@@ -79,16 +79,18 @@ try:
     conn = sqlite3.connect("emails_database.db")  # Create db connection
     cur = conn.cursor()
 
-    cur.execute(" CREATE TABLE IF NOT EXISTS emails(id integer, web text, title text, email text)")  # Create emails table
+    cur.execute(" CREATE TABLE IF NOT EXISTS emails(web text, title text, email text)")  # Create emails table
     conn.commit()
 
     i = 1
     for email in emails_set:
-        cur.execute("INSERT INTO emails VALUES(?, ?, ?, ?)", (i, email[0], email[1], email[2]))
+        cur.execute("INSERT INTO emails VALUES(?, ?, ?)", (email[0], email[1], email[2]))
         conn.commit()
         i += 1
+    print("[!] DONE")
 
 except Error as e:
+    print("[X] Error inserting elements in database")
     print(e)
 finally:
     if conn:

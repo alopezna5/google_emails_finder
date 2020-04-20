@@ -130,3 +130,9 @@ dmypy.json
 
 # IntelliJ’s project specific settings files
 .idea/
+
+# Generated databases
+*.db
+
+# Generated excel files
+*.xlsx
