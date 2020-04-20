@@ -91,11 +91,12 @@ def _second_level_email_finder(url, emails_set, pattern):
 
 def main():
     print(TITLE)
-
-    print("[!] Getting the web emails")
     emails_set = set()
 
-    for web_page in _make_a_google_query("'Colmenar Viejo' AND restaurantes AND email"):
+    query_results = _make_a_google_query("'Colmenar Viejo' AND restaurantes AND email")
+    
+    print("[!] Getting the web emails")
+    for web_page in query_results:
         try:
             # First level email finder
             _fist_level_email_finder(web_page, emails_set)
