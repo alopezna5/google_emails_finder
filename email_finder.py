@@ -78,7 +78,7 @@ def _fist_level_email_finder(url, emails_set):
                 href_email = i.attrs.get('href', None)
                 if href_email != None and "@" in href_email:
                     email_string = href_email.replace("\t", "").replace("\n", "").replace(" ", "").replace("mailto:",
-                                                                                                           "").replace("?subject=", "")
+                                                                                                           "").replace("?subject=", "").replace("?", "")
                     email = email_string
                     print(url, title, email)
                     emails_set.add((url, title, email))
