@@ -34,9 +34,9 @@ def _make_a_google_query(query):
     for i in search(query,  # The query you want to run
                     tld='com',  # The top level domain
                     lang='en',  # The language
-                    num=100,  # Number of results per page
+                    num=1,  # Number of results per page
                     start=0,  # First result to retrieve
-                    stop=500,  # Last result to retrieve
+                    stop=20,  # Last result to retrieve
                     pause=2.0,  # Lapse between HTTP requests
                     ):
         my_webs_page_result_list.append(i)
@@ -78,7 +78,8 @@ def _fist_level_email_finder(url, emails_set):
                 href_email = i.attrs.get('href', None)
                 if href_email != None and "@" in href_email:
                     email_string = href_email.replace("\t", "").replace("\n", "").replace(" ", "").replace("mailto:",
-                                                                                                           "").replace("?subject=", "").replace("?", "")
+                                                                                                           "").replace(
+                        "?subject=", "").replace("?", "")
                     email = email_string
                     print(url, title, email)
                     emails_set.add((url, title, email))
@@ -147,7 +148,6 @@ def main():
         # except:
         #     pass
 
-
     for email in emails_set:
         print(email)
 
@@ -160,15 +160,18 @@ def main():
     try:
         conn = sqlite3.connect("emails_database.db")  # Create db connection
         cur = conn.cursor()
-
-        cur.execute(" CREATE TABLE IF NOT EXISTS emails(web text, title text, email text)")  # Create emails table
+        cur.execute(
+            " CREATE TABLE IF NOT EXISTS emails(web text, title text, email text, PRIMARY KEY(email))")  # Create emails table
         conn.commit()
-
         i = 1
         for email in emails_set:
-            cur.execute("INSERT INTO emails VALUES(?, ?, ?)", (email[0], email[1], email[2]))
-            conn.commit()
-            i += 1
+            try:
+                cur.execute("INSERT INTO emails VALUES(?, ?, ?)", (email[0], email[1], email[2]))
+                conn.commit()
+                i += 1
+            except:
+                print("{} not inserted due the email is already stored".format(email))
+
         print("[!] DONE")
 
     except Error as e:
