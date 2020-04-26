@@ -34,9 +34,9 @@ def _make_a_google_query(query):
     for i in search(query,  # The query you want to run
                     tld='com',  # The top level domain
                     lang='en',  # The language
-                    num=1,  # Number of results per page
+                    num=6000,  # Number of results per page
                     start=0,  # First result to retrieve
-                    stop=20,  # Last result to retrieve
+                    stop=6000,  # Last result to retrieve
                     pause=2.0,  # Lapse between HTTP requests
                     ):
         my_webs_page_result_list.append(i)
@@ -133,20 +133,20 @@ def main():
     print(TITLE)
     emails_set = set()
 
-    query_results = _make_a_google_query("'Colmenar Viejo' AND restaurantes")
+    query_results = _make_a_google_query("(restaurante OR bar OR catering) AND 'Tres Cantos'")
 
     print("[!] Getting the web emails")
     for web_page in query_results:
-        # try:
-        # First level email finder
-        emails_set = _insert_found_emails(emails_set, _fist_level_email_finder(web_page, emails_set))
+        try:
+            # First level email finder
+            emails_set = _insert_found_emails(emails_set, _fist_level_email_finder(web_page, emails_set))
 
-        # Second level email finder if it found more links to what I am looking for
-        emails_set = _insert_found_emails(emails_set, _second_level_email_finder(web_page, emails_set, "/Restaurant"))
-        emails_set = _insert_found_emails(emails_set, _second_level_email_finder(web_page, emails_set, "/restaurant"))
+            # Second level email finder if it found more links to what I am looking for
+            emails_set = _insert_found_emails(emails_set, _second_level_email_finder(web_page, emails_set, "/Restaurant"))
+            emails_set = _insert_found_emails(emails_set, _second_level_email_finder(web_page, emails_set, "/restaurant"))
 
-        # except:
-        #     pass
+        except:
+            pass
 
     for email in emails_set:
         print(email)
@@ -158,7 +158,7 @@ def main():
 
     conn = None
     try:
-        conn = sqlite3.connect("emails_database.db")  # Create db connection
+        conn = sqlite3.connect("emails_database_tres_cantos.db")  # Create db connection
         cur = conn.cursor()
         cur.execute(
             " CREATE TABLE IF NOT EXISTS emails(web text, title text, email text, PRIMARY KEY(email))")  # Create emails table

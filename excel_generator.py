@@ -17,11 +17,11 @@ from xlsxwriter.workbook import Workbook
 
 try:
     # Create the sheet
-    workbook = Workbook('emails_mdr.xlsx')
+    workbook = Workbook('emails_database_tres_cantos.xlsx')
     worksheet = workbook.add_worksheet()
 
     # Read all the database content
-    conn = sqlite3.connect("emails_database.db")  # Create db connection
+    conn = sqlite3.connect("emails_database_tres_cantos.db")  # Create db connection
     cur = conn.cursor()
     all_emails_info = cur.execute("select * from emails")
 
