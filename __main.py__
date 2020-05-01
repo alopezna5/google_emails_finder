@@ -24,12 +24,15 @@ TITLE = """
 if __name__ == "__main__":
     print(TITLE)
 
-    if len(sys.argv) < 3:
-        sys.exit('[X] Usage: python {} "query to search" db_name'.format(sys.argv[0]))
-    else:
-        finder = email_finder(sys.argv[1], sys.argv[2])
-        finder.store_emails()
+    try:
+        if len(sys.argv) < 3:
+            sys.exit('[X] Usage: python {} "query to search" db_name'.format(sys.argv[0]))
+        else:
+            finder = email_finder(sys.argv[1], sys.argv[2], sys.argv[3])
+            finder.store_emails()
 
-        if len(sys.argv) == 4:
-            excel_utils = excel_utils()
-            excel_utils.generate_excel_from_sqlite3_db(sys.argv[2] + ".db", sys.argv[3] + ".xlsx")
+            if len(sys.argv) == 4:
+                excel_utils = excel_utils()
+                excel_utils.generate_excel_from_sqlite3_db(sys.argv[2] + ".db", sys.argv[3] + ".xlsx")
+    except KeyboardInterrupt:
+        sys.exit('\n\tctrl + c detected, exiting...\n')

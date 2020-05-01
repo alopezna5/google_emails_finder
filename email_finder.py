@@ -16,9 +16,10 @@ from sqlite3 import Error
 
 class email_finder():
 
-    def __init__(self, query, db_name):
+    def __init__(self, query, db_name, paginate):
         self.query = query
         self.db_name = db_name
+        self.paginate = True if paginate is not None else False
 
 
     def _make_a_google_query(self, query):
@@ -41,7 +42,45 @@ class email_finder():
         return my_webs_page_result_list
 
 
-    def _fist_level_email_finder(self, url, emails_set):
+    def __initialize_db(self):
+        """
+        :return: It initializes the database
+        """
+        print("[!] Initializing database")
+        conn = sqlite3.connect(self.db_name + ".db")  # Create db connection
+        cur = conn.cursor()
+        cur.execute(
+            " CREATE TABLE IF NOT EXISTS emails(web text, title text, email text, PRIMARY KEY(email))")  # Create emails table
+        conn.commit()
+        conn.close()
+        print("[!] DONE!")
+
+
+    def _insert_tuple(self, tuple):
+        """
+        :param tuple: The tuple to insert in the sets self.results_set
+        :return: If the email (primary key) does not exists, it insert the tuple in self.results_set
+        """
+
+        print("[!] Inserting in DB")
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_name + ".db")  # Create db connection
+            cur = conn.cursor()
+            try:
+                cur.execute("INSERT INTO emails VALUES(?, ?, ?)", (tuple[0], tuple[1], tuple[2]))
+                conn.commit()
+            except:
+                print("{} not inserted due the email is already stored".format(tuple))
+        except Error as e:
+            print("[X] Error inserting elements in database")
+            print(e)
+        finally:
+            if conn:
+                conn.close()
+
+
+    def _fist_level_email_finder(self, url):
         """
         :param url: The URL where it is going to search
         :return: It returns the emails found
@@ -51,7 +90,7 @@ class email_finder():
         try:
             r = requests.get(url)
         except:
-            return emails_set
+            return False
 
         data = r.text
         soup = BeautifulSoup(data, "html.parser")
@@ -70,7 +109,7 @@ class email_finder():
                     i.string = i.string.replace("\t", "").replace("\n", "").replace(" ", "")
                     email = i.string
                     print(url, title, email)
-                    emails_set.add((url, title, email))
+                    self._insert_tuple((url, title, email))
                 else:
                     href_email = i.attrs.get('href', None)
                     if href_email != None and "@" in href_email:
@@ -80,11 +119,10 @@ class email_finder():
                             "?subject=", "").replace("?", "")
                         email = email_string
                         print(url, title, email)
-                        emails_set.add((url, title, email))
-        return emails_set
+                        self._insert_tuple((url, title, email))
 
 
-    def _second_level_email_finder(self, url, emails_set, pattern):
+    def _second_level_email_finder(self, url, pattern):
         """
         :param url: The URL where it is going to search
         :param pattern: The pattern for considering a link relevant for the search
@@ -96,7 +134,7 @@ class email_finder():
         try:
             r = requests.get(url)
         except:
-            return emails_set
+            return hrefs_set
 
         data = r.text
         soup = BeautifulSoup(data, "html.parser")
@@ -105,33 +143,50 @@ class email_finder():
 
         for pattern_match in second_email_search_filter:
             # Obtained list is inserted in a set for avoiding duplications
-            hrefs_set.add(pattern_match['href'])
+            if not pattern_match.attrs.get("data-page-number", False):
+                # It will ignore the pagination hrefs
+                hrefs_set.add(pattern_match['href'])
 
         if len(hrefs_set) > 0:
             for link in hrefs_set:
                 if ".html" in url:
-                    url = '/'.join(url.split("/")[:-1])
-
+                    # The final path of the url must be removed
+                    url = '/'.join(url.split(".html")[0].split("/")[:-1])
                 if not "http" in link:
-                    emails_set = self._insert_found_emails(emails_set,
-                                                           self._fist_level_email_finder(url + link, emails_set))
+                    self._fist_level_email_finder(url + link)
                 else:
-                    emails_set = self._insert_found_emails(emails_set, self._fist_level_email_finder(link, emails_set))
-
-        return emails_set
+                    self._fist_level_email_finder(link)
 
 
-    def _insert_found_emails(emails_set, new_emails_set):
-        for new_email in new_emails_set:
-            print(new_email)
-            emails_set.add(new_email)
-        return emails_set
+    def _paginate_page(self, web_page):
+        """
+        :param web_page: The web page to try to paginate
+        :return: It returns all the possible paginations
+        """
+        # Html finder
+        pagination_urls = set()
+        try:
+            r = requests.get(web_page)
+        except:
+            return pagination_urls
+
+        data = r.text
+        soup = BeautifulSoup(data, "html.parser")
+
+
+        for link in soup.find_all(href=re.compile("")):
+            if hasattr(link, 'attrs'):
+                if link.attrs.get("data-page-number", False):
+                    link_goes_to = link.attrs.get("href")
+                    if not "http" in link_goes_to:
+                        link_goes_to = web_page + link_goes_to
+                    pagination_urls.add(link_goes_to)
+        return pagination_urls
 
 
     def _store_set_in_db(self, emails_set):
         """
         :param emails_set: The elements to store in the database 
-        :param database_name: The name of the database to store in
         :return: It stores the given set into the given database
         """
         # Create a database connection to a SQLite database and insert the elements
@@ -164,36 +219,31 @@ class email_finder():
 
     def find_emails(self):
         """
-        :param query: the query to make in the search engines
         :return: It returns a set that contains tuples with information about the found emails. Structure: (url, page tittle, email)
         """
-        emails_set = set()
-
         query_results = self._make_a_google_query(self.query)
 
         print("[!] Getting the web emails")
         for web_page in query_results:
             try:
-                # First level email finder
-                emails_set = self._insert_found_emails(emails_set, self._fist_level_email_finder(web_page, emails_set))
+                related_pages_to_search = self._paginate_page(web_page)
+                related_pages_to_search.add(web_page)
+                print("[DEBUG] Going to search in:\n {} ".format(related_pages_to_search))
 
-                # Second level email finder if it found more links to what I am looking for
-                emails_set = self._insert_found_emails(emails_set, self._second_level_email_finder(web_page, emails_set,
-                                                                                                   "/Restaurant"))
-                emails_set = self._insert_found_emails(emails_set, self._second_level_email_finder(web_page, emails_set,
-                                                                                                   "/restaurant"))
+                for page_to_search in related_pages_to_search:
+                    # First level email finder
+                    self._fist_level_email_finder(page_to_search)
+
+                    # Second level email finder if it found more links to what I am looking for
+                    self._second_level_email_finder(page_to_search, "/Restaurant")
+                    self._second_level_email_finder(page_to_search, "/restaurant")
 
             except:
                 pass
 
-        for email in emails_set:
-            print(email)
-
-        print("[!] DONE, {} emails found".format(len(emails_set)))
-        return emails_set
-
 
     def store_emails(self):
-        emails_set = self.find_emails()
-        self._store_set_in_db(emails_set)
+        self.__initialize_db()
+        self.find_emails()
+        # self._store_set_in_db(self.results_set)
 
