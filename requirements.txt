@@ -1,0 +1,3 @@
+googlesearch-python
+bs4
+xlsxwriter
