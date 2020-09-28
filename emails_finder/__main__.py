@@ -5,10 +5,12 @@
 import sys
 
 # Email finder
-from email_finder import email_finder
 
 # Excel utils
-from excel_generator import excel_utils
+
+# Argument parsing
+import argparse
+
 
 TITLE = """
   ______  __  __            _____  _        ______  _____  _   _  _____   ______  _____  
@@ -21,18 +23,41 @@ TITLE = """
 """
 
 
+def cli(parser):
+    """
+
+    :param parser: The arguments to parse
+    :return:       It execute emails_finder with the parsed parameters
+
+    """
+    if parser is None:
+        raise Exception("[X] ERROR: Parser is None")
+
+    parser = argparse.ArgumentParser(prog='emails_finder', description=TITLE, formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument("-q", "--query", type=str, help="Query to make for your search", required=True)
+    parser.add_argument("-d", "--database", type=str, help="Name of the DB to create with the search results")
+    parser.add_argument("-e", "--excel", type=str, help="Name of the XLS to create with the search results")
+
+    args = parser.parse_args()
+
+    if not args.database and not args.excel:
+        raise Exception("[X] ERROR: Database and/or excel arguments must be included")
+
+    #TODO Execute emails_finder
+
+
+def main():
+    try:
+        cli(sys.argv[1:])
+    except Exception as e:
+        print(e)
+        sys.exit(-1)
+
+
 if __name__ == "__main__":
     print(TITLE)
-
     try:
-        if len(sys.argv) < 3:
-            sys.exit('[X] Usage: python {} "query to search" db_name'.format(sys.argv[0]))
-        else:
-            finder = email_finder(sys.argv[1], sys.argv[2], sys.argv[3])
-            finder.store_emails()
-
-            if len(sys.argv) == 4:
-                excel_utils = excel_utils()
-                excel_utils.generate_excel_from_sqlite3_db(sys.argv[2] + ".db", sys.argv[3] + ".xlsx")
+        main()
     except KeyboardInterrupt:
         sys.exit('\n\tctrl + c detected, exiting...\n')
