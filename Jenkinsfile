@@ -15,7 +15,6 @@ node{
 
     stage('Launch script') {
         sh """
-            cd emails_finder
             ls
         """
     }
