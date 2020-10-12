@@ -16,7 +16,7 @@ node{
     stage('Launch script') {
         sh """
             cd emails_finder
-            python3 __main__.py -q "${env.QUERY}" -d  ${env.EXPORT_NAME}
+            python3 __main__.py -q \"${env.QUERY}\" -d  ${env.EXPORT_NAME}
         """
     }
 }
