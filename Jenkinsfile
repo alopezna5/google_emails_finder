@@ -10,12 +10,14 @@ properties(
 
 node{
     stage('Clone') {
-        git 'https://github.com/alopezna5/google_emails_finder'
+        git branch: 'feat/jenkinsfile_added', url: 'https://github.com/alopezna5/google_emails_finder'
     }
 
     stage('Launch script') {
         sh """
             ls
+            cd emails_finder
+            pwd
         """
     }
 }
