@@ -45,7 +45,20 @@ def cli(parser):
         raise Exception("[X] ERROR: Database and/or excel arguments must be included")
 
     #TODO Execute emails_finder
+    elif args.database:
+        "generate database"
+        if args.excel:
+            "generate excel from database"
+    elif args.excel:
+        "generate excel"
 
+    # Otra opción si finalmente uso la db para generar la excel:
+    if args.excel:
+        "generate database and excel"
+        if args.database:
+            "return database y excel"
+        else:
+            "return excel"
 
 def main():
     try:
