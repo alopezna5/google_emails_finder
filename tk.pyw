@@ -3,8 +3,8 @@ from tkinter import filedialog
 import threading
 import time
 import os
-from email_finder import email_finder
-from excel_generator import excel_utils
+from emails_finder.email_finder import email_finder
+from emails_finder.excel_generator import excel_utils
 
 
 def run_email_finder(search, name, folder):
