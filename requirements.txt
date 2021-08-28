@@ -1,3 +1,4 @@
 googlesearch-python
 bs4
 xlsxwriter
+pyinstaller==4.5.1
